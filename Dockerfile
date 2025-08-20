@@ -1,5 +1,8 @@
 # Use a small NGINX
-FROM nginx:alpine
+FROM public.ecr.aws/nginx/nginx:alpine
+COPY index.html /usr/share/nginx/html/index.html
+EXPOSE 80
+
 
 # Replace default NGINX content with our page
 COPY index.html /usr/share/nginx/html/index.html
