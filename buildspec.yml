@@ -3,12 +3,11 @@ version: 0.2
 env:
   variables:
     CONTAINER_NAME: "web"          # must match ECS container name in the task def
-    AWS_REGION: "us-east-1"       # <-- set to your region
+    AWS_REGION: "us-east-1"        # <-- set to YOUR region
 
 phases:
   pre_build:
     commands:
-      - 'set -euo pipefail'
       - 'echo "==> Verifying AWS CLI and identity"'
       - 'aws --version'
       - 'ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)'
@@ -29,12 +28,4 @@ phases:
 
   post_build:
     commands:
-      - 'echo "==> Pushing image to ECR"'
-      - 'docker push "${ECR_REPO_URI}:latest"'
-      - 'echo "==> Writing imagedefinitions.json for ECS deploy"'
-      - 'printf ''[{"name":"%s","imageUri":"%s"}]'' "${CONTAINER_NAME}" "${ECR_REPO_URI}:latest" > imagedefinitions.json'
-      - 'cat imagedefinitions.json'
-
-artifacts:
-  files:
-    - imagedefinitions.json
+      - 'echo "==>
