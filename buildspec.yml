@@ -26,11 +26,18 @@ phases:
 
   post_build:
     commands:
-      - 'echo "==> Pushing image to ECR"'
-      - 'docker push "${ECR_REPO_URI}:latest"'
+      - 'echo "==> DEBUG: show docker images"'
+      - 'docker images | head -20'
+      - 'echo "==> DEBUG: verifying ECR repo exists and we can call ECR APIs"'
+      - 'aws ecr describe-repositories --repository-names "${ECR_REPO}" --region "${REGION}"'
+      - 'echo "==> DEBUG: trying ECR token fetch (should succeed)"'
+      - 'aws ecr get-login-password --region "${REGION}" >/dev/null || { echo "ECR token fetch FAILED"; exit 2; }'
+      - 'echo "==> Pushing image to ECR: ${ECR_REPO_URI}:latest"'
+      - 'docker push "${ECR_REPO_URI}:latest" || { echo "PUSH FAILED"; exit 3; }'
       - 'echo "==> Writing imagedefinitions.json for ECS deploy"'
       - 'printf ''[{"name":"%s","imageUri":"%s"}]'' "${CONTAINER_NAME}" "${ECR_REPO_URI}:latest" > imagedefinitions.json'
       - 'cat imagedefinitions.json'
+
 
 artifacts:
   files:
