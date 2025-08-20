@@ -1,0 +1,29 @@
+version: 0.2
+
+env:
+  variables:
+    CONTAINER_NAME: "web"            # MUST match ECS task definition container name
+  parameter-store:
+    # (optional) you could store AWS_ACCOUNT_ID/AWS_REGION in SSM; for simplicity we read env below
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws --version
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REGION=${AWS_REGION:-${AWS_DEFAULT_REGION}}
+      - ECR_REPO_URI=${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/web-demo
+      - aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
+  build:
+    commands:
+      - echo Building the Docker image...
+      - docker build -t ${ECR_REPO_URI}:latest .
+  post_build:
+    commands:
+      - echo Pushing the image to ECR...
+      - docker push ${ECR_REPO_URI}:latest
+      - echo Writing imagedefinitions.json for ECS deploy...
+      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "${ECR_REPO_URI}:latest" > imagedefinitions.json
+artifacts:
+  files:
+    - imagedefinitions.json
