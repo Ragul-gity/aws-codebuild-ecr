@@ -13,7 +13,7 @@ phases:
       - 'ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)'
       - 'REGION=${AWS_REGION}'
       - '[ -n "$REGION" ] || { echo "ERROR_REGION_NOT_SET"; exit 1; }'
-      - 'ECR_REPO="web-demo"'
+      - 'ECR_REPO="web-demo-anil"'
       - 'ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"'
       - 'ECR_REPO_URI="${ECR_URI}/${ECR_REPO}"'
       - 'echo "==> Logging in to ECR ${ECR_URI}"'
