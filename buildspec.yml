@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    CONTAINER_NAME: "web"           # must match ECS task definition container name
+    CONTAINER_NAME: "web-anil"           # must match ECS task definition container name
     AWS_REGION: "us-east-1"
 
 phases:
