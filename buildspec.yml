@@ -2,27 +2,38 @@ version: 0.2
 
 env:
   variables:
-    CONTAINER_NAME: "web"   # must match ECS container name
+    CONTAINER_NAME: "web"            # must match ECS task definition container name
+    AWS_REGION: "us-east-1"         # <-- set this to your region (same as ECR/ECS/CodeBuild)
 
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
+      - set -euo pipefail
+      - echo "==> Verifying AWS CLI and identity"
       - aws --version
       - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-      - REGION=${AWS_REGION:-${AWS_DEFAULT_REGION}}
-      - ECR_REPO_URI=${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/web-demo
-      - aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
+      - REGION=${AWS_REGION:-${AWS_DEFAULT_REGION:-}}
+      - if [ -z "${REGION}" ]; then echo "ERROR: REGION not set"; exit 1; fi
+      - ECR_REPO="web-demo"
+      - ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+      - ECR_REPO_URI="${ECR_URI}/${ECR_REPO}"
+      - echo "==> Ensuring ECR repo ${ECR_REPO} exists in ${REGION}"
+      - aws ecr describe-repositories --repository-names "${ECR_REPO}" --region "${REGION}" >/dev/null 2>&1 || aws ecr create-repository --repository-name "${ECR_REPO}" --region "${REGION}"
+      - echo "==> Logging in to ECR ${ECR_URI}"
+      - aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ECR_URI}"
+
   build:
     commands:
-      - echo Building the Docker image...
-      - docker build -t ${ECR_REPO_URI}:latest .
+      - echo "==> Building Docker image ${ECR_REPO_URI}:latest"
+      - docker build -t "${ECR_REPO_URI}:latest" .
+
   post_build:
     commands:
-      - echo Pushing the image to ECR...
-      - docker push ${ECR_REPO_URI}:latest
-      - echo Writing imagedefinitions.json for ECS deploy...
-      - printf '[{"name":"%s","imageUri":"%s"}]' "$CONTAINER_NAME" "${ECR_REPO_URI}:latest" > imagedefinitions.json
+      - echo "==> Pushing image to ECR"
+      - docker push "${ECR_REPO_URI}:latest"
+      - echo "==> Writing imagedefinitions.json for ECS deploy"
+      - printf '[{"name":"%s","imageUri":"%s"}]' "${CONTAINER_NAME}" "${ECR_REPO_URI}:latest" > imagedefinitions.json
+      - cat imagedefinitions.json
 
 artifacts:
   files:
