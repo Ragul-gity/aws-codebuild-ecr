@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    CONTAINER_NAME: "web-anil"           # must match ECS task definition container name
+    CONTAINER_NAME: "web-ragul"           # must match ECS task definition container name
     AWS_REGION: "us-east-1"
 
 phases:
@@ -13,7 +13,7 @@ phases:
       - 'ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)'
       - 'REGION=${AWS_REGION}'
       - '[ -n "$REGION" ] || { echo "ERROR_REGION_NOT_SET"; exit 1; }'
-      - 'ECR_REPO="web-demo-anil"'
+      - 'ECR_REPO="web-demo-ragul"'
       - 'ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"'
       - 'ECR_REPO_URI="${ECR_URI}/${ECR_REPO}"'
       - 'echo "==> Logging in to ECR ${ECR_URI}"'
